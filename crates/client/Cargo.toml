@@ -7,3 +7,5 @@ edition = "2024"
 bevy = "0.17.3"
 shared = { path = "../shared" }
 game_core = { path = "../game_core" }
+fastrand = "2.0"
+net = {path = "../net"}
