@@ -1,109 +1,69 @@
-use game_core::{PlayerId, WorldState};
-use net::{ClientMessage, ServerMessage};
+// server/src/main.rs
+use std::net::{SocketAddr, UdpSocket};
 use std::time::{Duration, Instant};
-use std::{
-    collections::HashMap,
-    net::{SocketAddr, UdpSocket},
-};
 
-struct ServerState {
-    next_player_id: u32,
-    clients: HashMap<SocketAddr, PlayerId>,
-    world: WorldState,
-}
+use ::net::client::message::ClientMessage;
+use game_core::PlayerId;
 
-impl ServerState {
-    fn new() -> Self {
-        Self {
-            next_player_id: 1,
-            clients: HashMap::new(),
-            world: WorldState::new(),
-        }
-    }
+//mod input;
+mod net;
+//mod simulation;
+//mod state;
 
-    fn allocate_player_id(&mut self) -> PlayerId {
-        let id = PlayerId(self.next_player_id);
-        self.next_player_id += 1;
-        id
-    }
-}
+const SERVER_TICK_RATE: u64 = 1;
+const TICK_DURATION: Duration = Duration::from_millis(1_000 / SERVER_TICK_RATE);
 
 fn main() -> std::io::Result<()> {
-    let socket = UdpSocket::bind("127.0.0.1:4000")?;
+    // -------------------------
+    // Socket
+    // -------------------------
+
+    let socket = UdpSocket::bind("0.0.0.0:4000")?;
     socket.set_nonblocking(true)?;
-    println!("UDP server listening on 127.0.0.1:4000");
+    println!("Server listening on 0.0.0.0:4000");
 
-    let mut state = ServerState::new();
-    let mut buffer = [0u8; 1024];
-    let mut last_snapshot = Instant::now();
+    //// -------------------------
+    //// State
+    //// -------------------------
+    //let mut state = ServerState::new();
+    let mut next_tick = Instant::now();
+    let mut tickId: u64 = 0;
+    const MAX_TICKS_PROCESSED: u8 = 5;
 
+    // -------------------------
+    // Main loop
+    // -------------------------
     loop {
-        match socket.recv_from(&mut buffer) {
-            Ok((len, addr)) => {
-                handle_packet(&socket, &buffer[..len], addr, &mut state)?;
-            }
-            Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
-                // no data, seguimos
-            }
-            Err(e) => return Err(e),
-        }
-
-        if last_snapshot.elapsed() >= Duration::from_millis(100) {
-            send_snapshot(&socket, &state)?;
-            last_snapshot = Instant::now();
-        }
-    }
-}
-
-fn handle_packet(
-    socket: &UdpSocket,
-    data: &[u8],
-    addr: SocketAddr,
-    state: &mut ServerState,
-) -> std::io::Result<()> {
-    let msg = match ClientMessage::decode(data) {
-        Some(m) => m,
-        None => return Ok(()),
-    };
-
-    match msg {
-        ClientMessage::Join => {
-            let player_id = if let Some(id) = state.clients.get(&addr) {
-                *id
-            } else {
-                let id = state.allocate_player_id();
-                state.clients.insert(addr, id);
-                state.world.add_player(id);
-                println!("Player {:?} connected from {}", id, addr);
-                id
-            };
-
-            let mut buffer = Vec::new();
-            ServerMessage::Welcome { player_id }.encode(&mut buffer);
-            socket.send_to(&buffer, addr)?;
-        }
-        ClientMessage::Move { dx, dy } => {
-            if let Some(player_id) = state.clients.get(&addr) {
-                state.world.move_player(*player_id, dx, dy);
+        // 1️⃣ Receive network messages
+        for (addr, msg) in net::recv::recv_messages(&socket) {
+            match msg {
+                ClientMessage::Join => {
+                    /*let player_id = state.add_player(addr);*/
+                    net::send::send_welcome(&socket, addr, PlayerId(100_u64));
+                    println!("JOIN");
+                }
+                _ => (), //ClientMessage::Input(input_msg) => {
+                         //    state.handle_input(addr, input_msg);
+                         //}
             }
         }
+
+        // 2️⃣ Fixed tick
+
+        let mut ticks_processed: u8 = 0;
+        while Instant::now() >= next_tick && ticks_processed < MAX_TICKS_PROCESSED {
+            next_tick += TICK_DURATION;
+            ticks_processed += 1;
+        }
+
+        let now = Instant::now();
+        if next_tick > now {
+            std::thread::sleep(next_tick - now)
+        };
+
+        //  simulation::step::simulate_tick(&mut state);
+        //
+        //    // 3️⃣ Send snapshot
+        //    net::send::broadcast_snapshot(&socket, &state);
     }
-    Ok(())
-}
-fn send_snapshot(socket: &UdpSocket, state: &ServerState) -> std::io::Result<()> {
-    let players = state
-        .world
-        .players
-        .iter()
-        .map(|(id, p)| (*id, p.clone()))
-        .collect::<Vec<_>>();
-
-    let mut buffer = Vec::new();
-    ServerMessage::Snapshot { players }.encode(&mut buffer);
-
-    for addr in state.clients.keys() {
-        socket.send_to(&buffer, addr)?;
-    }
-
-    Ok(())
 }

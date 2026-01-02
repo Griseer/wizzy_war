@@ -3097,6 +3097,7 @@ name = "net"
 version = "0.1.0"
 dependencies = [
  "bincode",
+ "bitflags 2.10.0",
  "game_core",
  "serde",
  "shared",
@@ -4071,10 +4072,8 @@ dependencies = [
 name = "server"
 version = "0.1.0"
 dependencies = [
- "bevy",
  "game_core",
  "net",
- "shared",
 ]
 
 [[package]]
@@ -4091,6 +4090,7 @@ name = "shared"
 version = "0.1.0"
 dependencies = [
  "bincode",
+ "bitflags 2.10.0",
  "serde",
 ]
 
