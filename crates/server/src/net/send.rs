@@ -1,7 +1,7 @@
 // server/src/net/send.rs
 
 use ::net::server::message::ServerMessage;
-use game_core::PlayerId;
+use shared::ids::PlayerId;
 use std::net::{SocketAddr, UdpSocket};
 
 pub fn send_welcome(socket: &UdpSocket, addr: SocketAddr, player_id: PlayerId) {

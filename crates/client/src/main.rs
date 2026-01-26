@@ -2,7 +2,7 @@
 use bevy::prelude::*;
 use std::net::UdpSocket;
 
-//mod input;
+mod input;
 mod net;
 //mod render;
 //mod world;
@@ -20,7 +20,7 @@ fn main() -> std::io::Result<()> {
             net::NetPlugin::new(socket),
             //world::WorldPlugin,
             //render::RenderPlugin,
-            //input::InputPlugin,
+            input::InputPlugin,
         ))
         .run();
 

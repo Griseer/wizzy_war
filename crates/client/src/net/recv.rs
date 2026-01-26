@@ -1,7 +1,7 @@
 // client/src/net/recv.rs
 
 use bevy::prelude::*;
-use game_core::PlayerId;
+use shared::ids::PlayerId;
 use net::server::message::ServerMessage;
 
 use super::Network;

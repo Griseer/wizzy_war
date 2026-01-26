@@ -3,8 +3,8 @@
 // --------------------
 
 use crate::wire::*;
-use game_core::types::vec2::Vec2f;
-use game_core::PlayerId;
+use shared::ids::PlayerId;
+use shared::math::{Vec2f};
 
 pub enum ServerMessage {
     Welcome {

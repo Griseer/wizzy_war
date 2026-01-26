@@ -4074,6 +4074,7 @@ version = "0.1.0"
 dependencies = [
  "game_core",
  "net",
+ "shared",
 ]
 
 [[package]]

@@ -1,2 +1,2 @@
-mod step;
-mod tick;
+pub mod step;
+pub mod tick;

@@ -2,43 +2,20 @@
 // ClientMessage
 // --------------------
 
-use game_core::types::vec2::{Vec2f, Vec2i};
-
+use shared::math::{Vec2f, Vec2i};
+use shared::input::{InputFrame, Buttons};
 use crate::wire::*;
 
-use bitflags::bitflags;
 
-bitflags! {
-    pub struct Buttons:u16{
-        // elements
-        const WATER     = 1 << 0;
-        const LIFE      = 1 << 1;
-        const SHIELD    = 1 << 2;
-        const COLD      = 1 << 3;
-        const LIGHTNING = 1 << 4;
-        const ARCANE    = 1 << 5;
-        const EARTH     = 1 << 6;
-        const FIRE      = 1 << 7;
-        // cast
-        const NORMAL_CAST = 1 << 8;
-        const SELF_CAST = 1 << 9;
-        // Move
-        const MOVE_CLICK = 1 << 10;
-    }
-}
 
-pub struct InputFrame {
-    pub tick: u64,
-    pub buttons: Buttons,
-    pub aim_dir: Vec2f,
-    pub move_target: Option<Vec2f>,
-}
 
+#[derive(Debug)]
 pub struct ClientInputMessage {
     pub last_ack_tick: u64,
     pub inputs: Vec<InputFrame>,
 }
 
+#[derive(Debug)]
 pub enum ClientMessage {
     Join,
     Input(ClientInputMessage),
@@ -46,7 +23,15 @@ pub enum ClientMessage {
 
 impl ClientMessage {
     pub fn encode(&self, buf: &mut Vec<u8>) {
-        write_u8(buf, 0_u8);
+        match self {
+            ClientMessage::Join => {
+                write_u8(buf, 0);
+            }
+            ClientMessage::Input(input) => {
+                write_u8(buf, 1);
+                input.encode(buf);
+            }
+        }
     }
 
     pub fn decode(data: &[u8]) -> Option<Self> {

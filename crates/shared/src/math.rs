@@ -1,10 +1,13 @@
-#[derive(Debug, Copy, Clone, PartialEq)]
+
+
+#[derive(Debug, Copy, Clone, PartialEq,Default)]
 pub struct Vec2f {
     pub x: f32,
     pub y: f32,
 }
 
 impl Vec2f {
+
     pub const ZERO: Self = Self { x: 0.0, y: 0.0 };
 
     pub fn new(x: f32, y: f32) -> Self {

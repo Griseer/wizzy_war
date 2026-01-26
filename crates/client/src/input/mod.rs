@@ -1,16 +1,19 @@
-use bevy::prelude::*;
-use game_core::types::vec2::Vec2;
-use net::client::message::Buttons;
+//input/mod.rs
 
-use crate::net::send::send_input as net_send_input;
+use bevy::prelude::*;
+use shared::math::{Vec2f};
+use shared::input::{Buttons, InputFrame};
+use net::client::message::{ClientInputMessage, ClientMessage};
+
 use crate::net::Network;
-use net::wire::*;
+use crate::net::send::send_input as net_send_input;
 
 pub struct InputPlugin;
 
 impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<InputBuffer>();
+        app.init_resource::<InputState>();
         app.add_systems(Update, gather_input);
         app.add_systems(Update, send_input);
     }
@@ -22,14 +25,21 @@ pub struct InputBuffer {
     pub last_sent_tick: u64,
 }
 
+#[derive(Resource, Default)]
+pub struct InputState {
+    pub buttons: Buttons,
+    pub aim_dir: Vec2f,
+}
+
 pub fn gather_input(
     time: Res<Time>,
     mouse: Res<ButtonInput<MouseButton>>,
     keyboard: Res<ButtonInput<KeyCode>>,
     windows: Query<&Window>,
+    mut state: ResMut<InputState>,
     mut buffer: ResMut<InputBuffer>,
 ) {
-    let tick = (time.elapsed_seconds_f64() * 60.0) as u64;
+    let tick = (time.elapsed_secs_f64() * 60.0) as u64;
 
     let mut buttons = Buttons::empty();
 
@@ -67,13 +77,25 @@ pub fn gather_input(
     }
 
     // --- aim ---
-    let Ok(window) = windows.get_single() else {
+    let Ok(window) = windows.single() else {
         return;
     };
     let cursor = window.cursor_position();
     let aim_dir = cursor
-        .map(|p| Vec2 { x: p.x, y: p.y })
-        .unwrap_or(Vec2 { x: 0.0, y: 0.0 });
+        .map(|p| Vec2f { x: p.x, y: p.y })
+        .unwrap_or(state.aim_dir);
+
+    if buttons.is_empty() 
+        && (aim_dir.x.abs() - state.aim_dir.x).abs() == 0.0 
+        && (aim_dir.y.abs() - state.aim_dir.y).abs() == 0.0
+    {
+        
+        return;
+
+    };
+
+    state.aim_dir = aim_dir.clone();
+
 
     let input = InputFrame {
         tick,
@@ -81,6 +103,8 @@ pub fn gather_input(
         aim_dir,
         move_target: None, // se llena con click-move si lo implementas
     };
+
+
 
     buffer.inputs.push(input);
 }
