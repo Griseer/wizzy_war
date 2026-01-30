@@ -1,7 +1,10 @@
+//game_core/src/player.mod.rs
+
 use std::net::SocketAddr;
 use shared::input::{InputFrame, Buttons};
 use shared::ids::PlayerId;
 use state::PlayerState;
+use shared::tick::InputTick;
 
 pub mod input;
 
@@ -9,9 +12,9 @@ pub mod state;
 
 
 pub struct Player {
-    id: PlayerId,
-    state: PlayerState,
-    last_processed_tick: u64,
+    pub id: PlayerId,
+    pub state: PlayerState,
+    pub last_processed_tick: InputTick,
 }
 
 impl Player {
@@ -19,12 +22,12 @@ impl Player {
         Player {
             id,
             state: state::PlayerState::new(),
-            last_processed_tick: 0
+            last_processed_tick: InputTick(0),
         }
     }
 
     pub fn apply_input(&mut self, frame:&InputFrame){
-        // 1️⃣ ignorar inputs viejos o repetidos
+        // ignorar inputs viejos o repetidos
         if frame.tick <= self.last_processed_tick {
             return;
         }
@@ -35,9 +38,11 @@ impl Player {
         if frame.buttons.contains(Buttons::MOVE_CLICK) {
             if let Some(target) = frame.move_target {
                 self.state.move_target = Some(target);
-            }
-        }
 
+            }
+
+        }
+        
     }
 
 }

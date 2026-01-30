@@ -1,9 +1,10 @@
 //input/mod.rs
 
 use bevy::prelude::*;
-use shared::math::{Vec2f};
-use shared::input::{Buttons, InputFrame};
 use net::client::message::{ClientInputMessage, ClientMessage};
+use shared::input::{Buttons, InputFrame};
+use shared::math::Vec2f;
+use shared::tick::InputTick;
 
 use crate::net::Network;
 use crate::net::send::send_input as net_send_input;
@@ -22,13 +23,15 @@ impl Plugin for InputPlugin {
 #[derive(Resource, Default)]
 pub struct InputBuffer {
     pub inputs: Vec<InputFrame>,
-    pub last_sent_tick: u64,
+    pub next_tick: InputTick,
+    pub last_sent_tick: InputTick,
 }
 
 #[derive(Resource, Default)]
 pub struct InputState {
     pub buttons: Buttons,
     pub aim_dir: Vec2f,
+    pub move_target: Option<Vec2f>,
 }
 
 pub fn gather_input(
@@ -39,7 +42,9 @@ pub fn gather_input(
     mut state: ResMut<InputState>,
     mut buffer: ResMut<InputBuffer>,
 ) {
-    let tick = (time.elapsed_secs_f64() * 60.0) as u64;
+
+    let tick = buffer.next_tick;
+    buffer.next_tick = InputTick(buffer.next_tick.0 + 1);
 
     let mut buttons = Buttons::empty();
 
@@ -85,26 +90,32 @@ pub fn gather_input(
         .map(|p| Vec2f { x: p.x, y: p.y })
         .unwrap_or(state.aim_dir);
 
-    if buttons.is_empty() 
-        && (aim_dir.x.abs() - state.aim_dir.x).abs() == 0.0 
-        && (aim_dir.y.abs() - state.aim_dir.y).abs() == 0.0
-    {
-        
-        return;
-
-    };
-
     state.aim_dir = aim_dir.clone();
 
+    // ---- Move ----
+
+    let h_window = window.height();
+    let w_window = window.width();
+
+    let move_target = if mouse.just_pressed(MouseButton::Left) {
+        state.move_target = cursor.map(|p| Vec2f { x: p.x - w_window / 2.0, y: (h_window / 2.0) - p.y});
+        buttons |= Buttons:: MOVE_CLICK;
+        cursor.map(|p| Vec2f {  x: p.x - w_window / 2.0, y:(h_window / 2.0) - p.y })
+    } else {
+        None
+    };
+
+    if buttons.is_empty() && move_target.is_none() && aim_dir == state.aim_dir {
+        return;
+    }
+    
 
     let input = InputFrame {
         tick,
         buttons,
         aim_dir,
-        move_target: None, // se llena con click-move si lo implementas
+        move_target: move_target, // se llena con click-move si lo implementas
     };
-
-
 
     buffer.inputs.push(input);
 }

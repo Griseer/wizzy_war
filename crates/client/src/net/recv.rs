@@ -3,36 +3,36 @@
 use bevy::prelude::*;
 use shared::ids::PlayerId;
 use net::server::message::ServerMessage;
+use std::net::UdpSocket;
 
 use super::Network;
 //use crate::world::RemoteWorld;
 
-pub fn receive_snapshots(network: Res<Network> /* mut world: ResMut<RemoteWorld> */) {
+pub fn recv_network_system(
+    mut network: ResMut<Network>,
+) {
+    let msgs = recv_messages(&network.socket);
+    network.incoming.extend(msgs);
+}
+
+
+
+
+pub fn recv_messages(socket: &UdpSocket) -> Vec<ServerMessage> {
+    let mut messages = Vec::new();
     let mut buffer = [0u8; 2048];
 
     loop {
-        match network.socket.recv(&mut buffer) {
-            Ok(len) => match ServerMessage::decode(&buffer[..len]) {
-                Some(ServerMessage::Snapshot { players, .. }) => {
-                    //world.players.clear();
-                    //for (id, state) in players {
-                    //    world.players.insert(id, Vec2::new(state.x, state.y));
-                    //}
+        match socket.recv(&mut buffer) {
+            Ok(len) => {
+                if let Some(msg) = ServerMessage::decode(&buffer[..len]) {
+                    messages.push(msg);
                 }
-
-                Some(ServerMessage::Welcome {
-                    player_id,
-                    tick_rate,
-                }) => {
-                    println!("welcome player id: {:?}", player_id)
-                }
-
-                None => {
-                    break;
-                }
-            },
+            }
             Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => break,
             Err(_) => break,
         }
     }
+
+    messages
 }

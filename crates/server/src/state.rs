@@ -1,5 +1,6 @@
 
 use game_core::player::{Player};
+use net::server::message::ServerMessage;
 use shared::ids::PlayerId;
 use net::client::message::ClientInputMessage;
 use std::collections::HashMap;
@@ -7,35 +8,45 @@ use std::net::SocketAddr;
 use std::collections::VecDeque;
 use shared::input::InputFrame;
 
+use shared::tick::{InputTick, ServerTick};
 use crate::simulation::tick::run;
+use crate::simulation::snapshot::{ServerSnapshot};
+
 
 pub struct ServerState {
     next_player_id: u64,
-    pub tick: u64,
+    pub tick:ServerTick,
     pub addr_players: HashMap<SocketAddr, PlayerId>,
     pub players: HashMap<PlayerId, Player>,
     pub input_buffers: HashMap<PlayerId, InputBuffer>,
+    pub last_snapshot: ServerSnapshot,
+    pub tick_rate: u64,
 }
 
 pub struct InputBuffer{
-    pub last_processed_tick: u64,
+    pub last_processed_tick: InputTick,
     pub frames: VecDeque<InputFrame>,
 }
 
 impl InputBuffer {
     fn new()-> Self{
-        InputBuffer { last_processed_tick: 0, frames: VecDeque::new() }
+        InputBuffer { last_processed_tick: InputTick(0), frames: VecDeque::new() }
     }
 }
 
 impl ServerState {
-    pub fn new() -> Self {
+    pub fn new(tickRate:u64) -> Self {
         ServerState {
             next_player_id: 1,
-            tick: 0,
+            tick: ServerTick(0),
             addr_players: HashMap::new(),
             players: HashMap::new(),
             input_buffers: HashMap::new(),
+            last_snapshot: ServerSnapshot {
+                tick: ServerTick(0),
+                players: Vec::new(),
+            },
+            tick_rate: tickRate,
         }
     }
 
@@ -97,7 +108,7 @@ impl ServerState {
         }
     }
 
-    pub fn simulate_tick(&mut self) {
+    pub fn simulate_tick(&mut self){
         run(self);
     }
     

@@ -1,10 +1,10 @@
 use crate::math::Vec2f;
-
+use crate::tick::InputTick;
 
 
 #[derive(Debug)]
 pub struct InputFrame {
-    pub tick: u64,
+    pub tick: InputTick,
     pub buttons: Buttons,
     pub aim_dir: Vec2f,
     pub move_target: Option<Vec2f>,

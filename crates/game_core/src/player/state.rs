@@ -20,10 +20,10 @@ impl PlayerState {
     pub fn new() -> Self {
         PlayerState {
             position: Vec2f::ZERO,
-            velocity: Vec2f::ZERO,
+            velocity: Vec2f { x: 0.0, y: 0.0 },
             aim_dir: Vec2f::ZERO,
             hp: 1500,
-            move_speed: 6.0,
+            move_speed: 30.0,
             move_target: None,
             element_buffer: Vec::new(),
             is_casting: false

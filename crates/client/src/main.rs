@@ -4,8 +4,11 @@ use std::net::UdpSocket;
 
 mod input;
 mod net;
-//mod render;
-//mod world;
+mod render;
+mod world;
+mod state;
+
+
 
 fn main() -> std::io::Result<()> {
     let socket = UdpSocket::bind("0.0.0.0:0")?;
@@ -18,9 +21,10 @@ fn main() -> std::io::Result<()> {
         .add_plugins(DefaultPlugins)
         .add_plugins((
             net::NetPlugin::new(socket),
-            //world::WorldPlugin,
-            //render::RenderPlugin,
+            state::StatePlugin,
+            world::WorldPlugin,
             input::InputPlugin,
+            render::RenderPlugin,
         ))
         .run();
 
