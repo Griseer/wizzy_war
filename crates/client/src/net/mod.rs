@@ -1,10 +1,10 @@
 //client/src/net/mod.rs
 
+use crate::{net::recv::recv_network_system, state::ClientState};
 use ::net::client::message::ClientMessage;
 use bevy::prelude::*;
-use std::net::UdpSocket;
 use net::server::message::ServerMessage;
-use crate::{net::recv::recv_network_system, state::ClientState};
+use std::net::UdpSocket;
 
 pub mod recv;
 pub mod send;
@@ -30,18 +30,17 @@ impl Plugin for NetPlugin {
             socket: self.socket.try_clone().unwrap(),
             incoming: Vec::new(),
         })
-        .add_systems(Update,( recv_network_system ,apply_server_messages_system));
+        .add_systems(Update, (recv_network_system, apply_server_messages_system));
     }
 }
 
-
-pub fn apply_server_messages_system(
-    mut network: ResMut<Network>,
-    mut state: ResMut<ClientState>,
-) {
+pub fn apply_server_messages_system(mut network: ResMut<Network>, mut state: ResMut<ClientState>) {
     for msg in network.incoming.drain(..) {
         match msg {
-            ServerMessage::Welcome { player_id, tick_rate } => {
+            ServerMessage::Welcome {
+                player_id,
+                tick_rate,
+            } => {
                 println!("Welcome! id={:?} tick_rate={}", player_id, tick_rate);
             }
 

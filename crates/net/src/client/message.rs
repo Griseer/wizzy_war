@@ -61,13 +61,8 @@ impl ClientInputMessage {
         for input in &self.inputs {
             write_u64(buf, input.tick.0);
             write_u16(buf, input.buttons.bits());
-            write_f32(buf, input.aim_dir.x);
-            write_f32(buf, input.aim_dir.y);
-            if input.buttons.contains(Buttons::MOVE_CLICK) {
-                let target = input.move_target.expect("MOVE_CLICK without target");
-                write_f32(buf, target.x);
-                write_f32(buf, target.y);
-            }
+            write_f32(buf, input.aim_target.x);
+            write_f32(buf, input.aim_target.y);
         }
     }
     pub fn decode(data: &[u8]) -> Option<Self> {
@@ -90,19 +85,12 @@ impl ClientInputMessage {
             let x = read_f32(data, &mut c)?;
             let y = read_f32(data, &mut c)?;
 
-            let move_target = if buttons.contains(Buttons::MOVE_CLICK) {
-                let x = read_f32(data, &mut c)?;
-                let y = read_f32(data, &mut c)?;
-                Some(Vec2f { x, y })
-            } else {
-                None
-            };
+            let aim_target = Vec2f { x, y };
 
             inputs.push(InputFrame {
                 tick,
                 buttons,
-                aim_dir: Vec2f { x, y },
-                move_target,
+                aim_target,
             });
         }
 

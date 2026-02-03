@@ -5,10 +5,8 @@ use std::net::UdpSocket;
 mod input;
 mod net;
 mod render;
-mod world;
 mod state;
-
-
+mod world;
 
 fn main() -> std::io::Result<()> {
     let socket = UdpSocket::bind("0.0.0.0:0")?;

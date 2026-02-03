@@ -7,11 +7,9 @@ pub fn simulate_players(state: &mut ServerState) {
     const ARRIVAL_EPSILON: f32 = 0.05;
 
     for player in state.players.values_mut() {
-        
         let Some(target) = player.state.move_target else {
             continue;
         };
-
 
         let pos = player.state.position;
         let dir = target - pos;
@@ -34,9 +32,7 @@ pub fn simulate_players(state: &mut ServerState) {
         } else {
             // avanza parcialmente
             let step = dir.normalized() * max_step;
-            player.state.position =  player.state.position + step;
+            player.state.position = player.state.position + step;
         }
     }
-
-
 }

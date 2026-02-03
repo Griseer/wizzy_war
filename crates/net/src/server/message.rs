@@ -4,7 +4,7 @@
 
 use crate::wire::*;
 use shared::ids::PlayerId;
-use shared::math::{Vec2f};
+use shared::math::{Vec2f, Vec3};
 use shared::tick::{InputTick, ServerTick};
 
 pub enum ServerMessage {
@@ -19,7 +19,6 @@ pub enum ServerMessage {
     },
 }
 
-
 #[derive(Clone)]
 pub struct PlayerSnapshot {
     pub id: PlayerId,
@@ -28,7 +27,6 @@ pub struct PlayerSnapshot {
     pub aim: Vec2f,
     pub last_processed_input: InputTick,
 }
-
 
 impl ServerMessage {
     pub fn encode(&self, buf: &mut Vec<u8>) {

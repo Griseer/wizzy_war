@@ -1,21 +1,19 @@
-
-use game_core::player::{Player};
+use game_core::player::Player;
+use net::client::message::ClientInputMessage;
 use net::server::message::ServerMessage;
 use shared::ids::PlayerId;
-use net::client::message::ClientInputMessage;
-use std::collections::HashMap;
-use std::net::SocketAddr;
-use std::collections::VecDeque;
 use shared::input::InputFrame;
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::net::SocketAddr;
 
-use shared::tick::{InputTick, ServerTick};
+use crate::simulation::snapshot::ServerSnapshot;
 use crate::simulation::tick::run;
-use crate::simulation::snapshot::{ServerSnapshot};
-
+use shared::tick::{InputTick, ServerTick};
 
 pub struct ServerState {
     next_player_id: u64,
-    pub tick:ServerTick,
+    pub tick: ServerTick,
     pub addr_players: HashMap<SocketAddr, PlayerId>,
     pub players: HashMap<PlayerId, Player>,
     pub input_buffers: HashMap<PlayerId, InputBuffer>,
@@ -23,19 +21,22 @@ pub struct ServerState {
     pub tick_rate: u64,
 }
 
-pub struct InputBuffer{
+pub struct InputBuffer {
     pub last_processed_tick: InputTick,
     pub frames: VecDeque<InputFrame>,
 }
 
 impl InputBuffer {
-    fn new()-> Self{
-        InputBuffer { last_processed_tick: InputTick(0), frames: VecDeque::new() }
+    fn new() -> Self {
+        InputBuffer {
+            last_processed_tick: InputTick(0),
+            frames: VecDeque::new(),
+        }
     }
 }
 
 impl ServerState {
-    pub fn new(tickRate:u64) -> Self {
+    pub fn new(tickRate: u64) -> Self {
         ServerState {
             next_player_id: 1,
             tick: ServerTick(0),
@@ -65,7 +66,7 @@ impl ServerState {
     }
 
     pub fn handle_input(&mut self, addr: SocketAddr, msg: ClientInputMessage) {
-         // 1️⃣ ¿Quién envía?
+        // 1️⃣ ¿Quién envía?
         let player_id = match self.addr_players.get(&addr) {
             Some(id) => *id,
             None => {
@@ -96,10 +97,7 @@ impl ServerState {
         }
 
         // 4️⃣ Mantener orden por tick (por si llegan fuera de orden)
-        buffer
-            .frames
-            .make_contiguous()
-            .sort_by_key(|f| f.tick);
+        buffer.frames.make_contiguous().sort_by_key(|f| f.tick);
 
         // (opcional) limitar tamaño
         const MAX_BUFFERED_INPUTS: usize = 64;
@@ -108,8 +106,7 @@ impl ServerState {
         }
     }
 
-    pub fn simulate_tick(&mut self){
+    pub fn simulate_tick(&mut self) {
         run(self);
     }
-    
 }

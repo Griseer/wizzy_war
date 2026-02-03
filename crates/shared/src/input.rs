@@ -1,20 +1,14 @@
-use crate::math::Vec2f;
+use crate::math::{Vec2f, Vec3};
 use crate::tick::InputTick;
-
 
 #[derive(Debug)]
 pub struct InputFrame {
     pub tick: InputTick,
     pub buttons: Buttons,
-    pub aim_dir: Vec2f,
-    pub move_target: Option<Vec2f>,
-
+    pub aim_target: Vec2f,
 }
 
-
-
 use bitflags::bitflags;
-
 
 bitflags! {
     #[derive(Default,Debug)]
@@ -31,8 +25,7 @@ bitflags! {
         // cast
         const NORMAL_CAST = 1 << 8;
         const SELF_CAST = 1 << 9;
-        // Move
-        const MOVE_CLICK = 1 << 10;
+        //Move
+        const MOVE_TO = 1 << 10;
     }
 }
-

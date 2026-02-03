@@ -1,21 +1,18 @@
-
 // crates/client/src/state.rs
 
 use bevy::prelude::*;
 use shared::ids::PlayerId;
 
-use std::collections::HashMap;
 use shared::math::Vec2f;
+use std::collections::HashMap;
 
 use net::server::message::PlayerSnapshot;
 
-
 pub struct StatePlugin;
 
-impl Plugin for StatePlugin{
+impl Plugin for StatePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<ClientState>();
-        
     }
 }
 
@@ -24,9 +21,6 @@ pub struct ClientPlayer {
     pub velocity: Vec2f,
     pub aim: Vec2f,
 }
-
-
-
 
 #[derive(Resource, Default)]
 pub struct ClientState {
@@ -43,7 +37,6 @@ pub struct ClientState {
 
     // inputs enviados pero no confirmados
     //pub pending_inputs: Vec<PlayerInput>,
-
     pub tick_rate: u64,
 }
 
@@ -57,9 +50,8 @@ impl ClientState {
             tick_rate: 0,
         }
     }
-    
+
     pub fn apply_snapshot(&mut self, snap: PlayerSnapshot) {
-        
         // por ahora: espejo directo (sin prediction)
         self.client_players.insert(
             snap.id,
@@ -72,4 +64,3 @@ impl ClientState {
         self.server_players.insert(snap.id, snap.clone());
     }
 }
-

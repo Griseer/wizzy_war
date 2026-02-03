@@ -1,8 +1,6 @@
 // SHARED
 
 pub mod ids;
-pub mod tick;
-pub mod math;
 pub mod input;
-
-
+pub mod math;
+pub mod tick;

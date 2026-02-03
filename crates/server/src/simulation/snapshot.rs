@@ -1,10 +1,11 @@
 //server/src/simulation/snapshot.rs
 
-use shared::{math::Vec2f, tick::ServerTick};
-use shared::ids::PlayerId;
-use net::server::message::{ServerMessage, PlayerSnapshot};
-use shared::tick::InputTick;
 use crate::state::ServerState;
+use net::server::message::{PlayerSnapshot, ServerMessage};
+use shared::ids::PlayerId;
+use shared::math::Vec3;
+use shared::tick::InputTick;
+use shared::{math::Vec2f, tick::ServerTick};
 
 pub struct ServerSnapshot {
     pub tick: ServerTick,
@@ -19,25 +20,22 @@ pub struct ServerPlayerSnapshot {
     pub last_processed_input: InputTick,
 }
 
-
-
-
 pub fn snapshot_to_message(snapshot: &ServerSnapshot) -> ServerMessage {
     ServerMessage::Snapshot {
         server_tick: snapshot.tick,
-        players: snapshot.players.iter().map(|p| {
-            PlayerSnapshot {
+        players: snapshot
+            .players
+            .iter()
+            .map(|p| PlayerSnapshot {
                 id: p.id,
                 position: p.position,
                 velocity: p.velocity,
                 aim: p.aim,
                 last_processed_input: p.last_processed_input,
-            }
-        }).collect(),
+            })
+            .collect(),
     }
 }
-
-
 
 pub fn build_snapshot(state: &ServerState) -> ServerSnapshot {
     let mut players = Vec::with_capacity(state.players.len());
@@ -57,6 +55,3 @@ pub fn build_snapshot(state: &ServerState) -> ServerSnapshot {
         players,
     }
 }
-
-
-

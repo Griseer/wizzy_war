@@ -8,6 +8,7 @@ use shared::tick::InputTick;
 
 use crate::net::Network;
 use crate::net::send::send_input as net_send_input;
+use crate::render::MyCamera;
 
 pub struct InputPlugin;
 
@@ -30,8 +31,7 @@ pub struct InputBuffer {
 #[derive(Resource, Default)]
 pub struct InputState {
     pub buttons: Buttons,
-    pub aim_dir: Vec2f,
-    pub move_target: Option<Vec2f>,
+    pub aim_target: Vec2f,
 }
 
 pub fn gather_input(
@@ -39,10 +39,10 @@ pub fn gather_input(
     mouse: Res<ButtonInput<MouseButton>>,
     keyboard: Res<ButtonInput<KeyCode>>,
     windows: Query<&Window>,
+    camera_q: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
     mut state: ResMut<InputState>,
     mut buffer: ResMut<InputBuffer>,
 ) {
-
     let tick = buffer.next_tick;
     buffer.next_tick = InputTick(buffer.next_tick.0 + 1);
 
@@ -81,43 +81,66 @@ pub fn gather_input(
         buttons |= Buttons::SELF_CAST;
     }
 
-    // --- aim ---
-    let Ok(window) = windows.single() else {
-        return;
-    };
-    let cursor = window.cursor_position();
-    let aim_dir = cursor
-        .map(|p| Vec2f { x: p.x, y: p.y })
-        .unwrap_or(state.aim_dir);
-
-    state.aim_dir = aim_dir.clone();
-
     // ---- Move ----
+    if mouse.just_pressed(MouseButton::Left) {
+        buttons |= Buttons::MOVE_TO;
+    }
 
-    let h_window = window.height();
-    let w_window = window.width();
+    // --- aim ---
 
-    let move_target = if mouse.just_pressed(MouseButton::Left) {
-        state.move_target = cursor.map(|p| Vec2f { x: p.x - w_window / 2.0, y: (h_window / 2.0) - p.y});
-        buttons |= Buttons:: MOVE_CLICK;
-        cursor.map(|p| Vec2f {  x: p.x - w_window / 2.0, y:(h_window / 2.0) - p.y })
-    } else {
-        None
-    };
+    let aim_target = get_aim(windows, camera_q);
 
-    if buttons.is_empty() && move_target.is_none() && aim_dir == state.aim_dir {
+    if buttons.is_empty() && aim_target == state.aim_target {
         return;
     }
-    
 
     let input = InputFrame {
         tick,
         buttons,
-        aim_dir,
-        move_target: move_target, // se llena con click-move si lo implementas
+        aim_target,
     };
 
     buffer.inputs.push(input);
+}
+
+fn get_aim(
+    windows: Query<&Window>,
+    camera_q: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
+) -> Vec2f {
+    let mut aim_target = Vec2f::ZERO;
+
+    let Ok(window) = windows.single() else {
+        return aim_target;
+    };
+    let Some(cursor) = window.cursor_position() else {
+        return aim_target;
+    };
+
+    let Ok((camera, camera_transform)) = camera_q.single() else {
+        return aim_target;
+    };
+
+    let Ok(ray) = camera.viewport_to_world(camera_transform, cursor) else {
+        return aim_target;
+    };
+
+    let origin = ray.origin;
+    let direction = ray.direction;
+    let plane_y = 0.0;
+
+    // Evitar división por cero
+    if direction.y.abs() > 0.0001 {
+        let t = (plane_y - origin.y) / direction.y;
+
+        if t > 0.0 {
+            let hit_point = origin + direction * t;
+            aim_target = Vec2f {
+                x: hit_point.x,
+                y: hit_point.z,
+            };
+        }
+    }
+    aim_target
 }
 
 pub fn send_input(net: Res<Network>, mut buffer: ResMut<InputBuffer>) {

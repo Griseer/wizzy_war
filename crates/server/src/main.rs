@@ -53,20 +53,16 @@ fn main() -> std::io::Result<()> {
 
         let mut ticks_processed: u8 = 0;
         while Instant::now() >= next_tick && ticks_processed < MAX_TICKS_PROCESSED {
-            
             state_server.simulate_tick();
             broadcast_snapshot(&socket, &state_server);
-            
+
             next_tick += TICK_DURATION;
             ticks_processed += 1;
-
         }
 
         let now = Instant::now();
         if next_tick > now {
             std::thread::sleep(next_tick - now)
         };
-
-
     }
 }

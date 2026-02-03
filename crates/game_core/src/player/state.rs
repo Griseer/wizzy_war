@@ -1,7 +1,7 @@
 use std::vec;
 
-use shared::math::Vec2f;
 use crate::spells::elements::Element;
+use shared::math::{Vec2f, Vec3};
 
 #[derive(Clone, Debug)]
 pub struct PlayerState {
@@ -23,10 +23,10 @@ impl PlayerState {
             velocity: Vec2f { x: 0.0, y: 0.0 },
             aim_dir: Vec2f::ZERO,
             hp: 1500,
-            move_speed: 30.0,
+            move_speed: 6.0,
             move_target: None,
             element_buffer: Vec::new(),
-            is_casting: false
+            is_casting: false,
         }
     }
 }

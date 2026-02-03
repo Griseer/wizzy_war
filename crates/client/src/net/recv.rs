@@ -1,22 +1,17 @@
 // client/src/net/recv.rs
 
 use bevy::prelude::*;
-use shared::ids::PlayerId;
 use net::server::message::ServerMessage;
+use shared::ids::PlayerId;
 use std::net::UdpSocket;
 
 use super::Network;
 //use crate::world::RemoteWorld;
 
-pub fn recv_network_system(
-    mut network: ResMut<Network>,
-) {
+pub fn recv_network_system(mut network: ResMut<Network>) {
     let msgs = recv_messages(&network.socket);
     network.incoming.extend(msgs);
 }
-
-
-
 
 pub fn recv_messages(socket: &UdpSocket) -> Vec<ServerMessage> {
     let mut messages = Vec::new();

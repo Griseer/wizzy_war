@@ -17,8 +17,8 @@ pub fn sync_players_from_snapshot_system(
     for (player_entity, mut transform) in query.iter_mut() {
         if let Some(snapshot) = state.server_players.get(&player_entity.id) {
             transform.translation.x = snapshot.position.x;
-            transform.translation.y = snapshot.position.y;
-            transform.translation.z = 0.0;
+            transform.translation.y = 0.0;
+            transform.translation.z = snapshot.position.y;
         }
     }
 }

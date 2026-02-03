@@ -1,15 +1,14 @@
 //game_core/src/player.mod.rs
 
-use std::net::SocketAddr;
-use shared::input::{InputFrame, Buttons};
 use shared::ids::PlayerId;
-use state::PlayerState;
+use shared::input::{Buttons, InputFrame};
 use shared::tick::InputTick;
+use state::PlayerState;
+use std::net::SocketAddr;
 
 pub mod input;
 
 pub mod state;
-
 
 pub struct Player {
     pub id: PlayerId,
@@ -26,7 +25,7 @@ impl Player {
         }
     }
 
-    pub fn apply_input(&mut self, frame:&InputFrame){
+    pub fn apply_input(&mut self, frame: &InputFrame) {
         // ignorar inputs viejos o repetidos
         if frame.tick <= self.last_processed_tick {
             return;
@@ -35,14 +34,10 @@ impl Player {
         self.last_processed_tick = frame.tick;
 
         // 2️⃣ movimiento por click
-        if frame.buttons.contains(Buttons::MOVE_CLICK) {
-            if let Some(target) = frame.move_target {
-                self.state.move_target = Some(target);
-
-            }
-
+        if frame.buttons.contains(Buttons::MOVE_TO) {
+            self.state.move_target = Some(frame.aim_target);
         }
-        
-    }
 
+        self.state.aim_dir = frame.aim_target.normalized();
+    }
 }
