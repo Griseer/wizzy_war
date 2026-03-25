@@ -6,14 +6,17 @@ use ::net::client::message::ClientMessage;
 use shared::ids::PlayerId;
 
 use crate::net::send::broadcast_snapshot;
+use crate::tick::run_tick;
 
 //mod input;
 mod net;
-mod simulation;
+mod tick;
 mod state;
+
 
 const SERVER_TICK_RATE: u64 = 60;
 const TICK_DURATION: Duration = Duration::from_millis(1_000 / SERVER_TICK_RATE);
+const DT:f32 = 1.0 / SERVER_TICK_RATE as f32;
 
 fn main() -> std::io::Result<()> {
     // -------------------------
@@ -29,7 +32,6 @@ fn main() -> std::io::Result<()> {
     //// -------------------------
     let mut state_server = state::ServerState::new(SERVER_TICK_RATE);
     let mut next_tick = Instant::now();
-    let mut tick_id: u64 = 0;
     const MAX_TICKS_PROCESSED: u8 = 5;
 
     // -------------------------
@@ -53,7 +55,7 @@ fn main() -> std::io::Result<()> {
 
         let mut ticks_processed: u8 = 0;
         while Instant::now() >= next_tick && ticks_processed < MAX_TICKS_PROCESSED {
-            state_server.simulate_tick();
+            run_tick(&mut state_server,  DT);
             broadcast_snapshot(&socket, &state_server);
 
             next_tick += TICK_DURATION;

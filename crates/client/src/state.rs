@@ -1,6 +1,7 @@
 // crates/client/src/state.rs
 
 use bevy::prelude::*;
+use game_core::model::spells::elements::Element;
 use shared::ids::PlayerId;
 
 use shared::math::Vec2f;
@@ -20,6 +21,7 @@ pub struct ClientPlayer {
     pub position: Vec2f,
     pub velocity: Vec2f,
     pub aim: Vec2f,
+    pub elements: [u16; 3],
 }
 
 #[derive(Resource, Default)]
@@ -59,6 +61,7 @@ impl ClientState {
                 position: snap.position,
                 velocity: snap.velocity,
                 aim: snap.aim,
+                elements: snap.elements,
             },
         );
         self.server_players.insert(snap.id, snap.clone());

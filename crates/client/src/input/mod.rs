@@ -2,9 +2,9 @@
 
 use bevy::prelude::*;
 use net::client::message::{ClientInputMessage, ClientMessage};
-use shared::input::{Buttons, InputFrame};
+use shared::input::{ActionsFlags, ElementsFlags, InputFrame};
 use shared::math::Vec2f;
-use shared::tick::InputTick;
+use shared::tick::Tick;
 
 use crate::net::Network;
 use crate::net::send::send_input as net_send_input;
@@ -24,13 +24,13 @@ impl Plugin for InputPlugin {
 #[derive(Resource, Default)]
 pub struct InputBuffer {
     pub inputs: Vec<InputFrame>,
-    pub next_tick: InputTick,
-    pub last_sent_tick: InputTick,
+    pub next_tick: Tick,
+    pub last_sent_tick: Tick,
 }
 
 #[derive(Resource, Default)]
 pub struct InputState {
-    pub buttons: Buttons,
+    pub elements_flags: ElementsFlags,
     pub aim_target: Vec2f,
 }
 
@@ -44,59 +44,62 @@ pub fn gather_input(
     mut buffer: ResMut<InputBuffer>,
 ) {
     let tick = buffer.next_tick;
-    buffer.next_tick = InputTick(buffer.next_tick.0 + 1);
+    buffer.next_tick = Tick(buffer.next_tick.0 + 1);
 
-    let mut buttons = Buttons::empty();
+    let mut elements_flags = ElementsFlags::empty();
+
+    let mut actions_flags = ActionsFlags::empty();
 
     // --- elementos ---
-    if keyboard.pressed(KeyCode::KeyQ) {
-        buttons |= Buttons::WATER;
+    if keyboard.just_pressed(KeyCode::KeyQ) {
+        elements_flags |= ElementsFlags::WATER;
     }
-    if keyboard.pressed(KeyCode::KeyW) {
-        buttons |= Buttons::LIFE;
+    if keyboard.just_pressed(KeyCode::KeyW) {
+        elements_flags |= ElementsFlags::LIFE;
     }
-    if keyboard.pressed(KeyCode::KeyE) {
-        buttons |= Buttons::SHIELD;
+    if keyboard.just_pressed(KeyCode::KeyE) {
+        elements_flags |= ElementsFlags::SHIELD;
     }
-    if keyboard.pressed(KeyCode::KeyR) {
-        buttons |= Buttons::COLD;
+    if keyboard.just_pressed(KeyCode::KeyR) {
+        elements_flags |= ElementsFlags::COLD;
     }
-    if keyboard.pressed(KeyCode::KeyA) {
-        buttons |= Buttons::LIGHTNING;
+    if keyboard.just_pressed(KeyCode::KeyA) {
+        elements_flags |= ElementsFlags::LIGHTNING;
     }
-    if keyboard.pressed(KeyCode::KeyS) {
-        buttons |= Buttons::ARCANE;
+    if keyboard.just_pressed(KeyCode::KeyS) {
+        elements_flags |= ElementsFlags::ARCANE;
     }
-    if keyboard.pressed(KeyCode::KeyD) {
-        buttons |= Buttons::EARTH;
+    if keyboard.just_pressed(KeyCode::KeyD) {
+        elements_flags |= ElementsFlags::EARTH;
     }
-    if keyboard.pressed(KeyCode::KeyF) {
-        buttons |= Buttons::FIRE;
+    if keyboard.just_pressed(KeyCode::KeyF) {
+        elements_flags |= ElementsFlags::FIRE;
     }
     // --- cast ---
     if mouse.just_pressed(MouseButton::Right) {
-        buttons |= Buttons::NORMAL_CAST;
+        actions_flags |= ActionsFlags::NORMAL_CAST;
     }
     if mouse.just_pressed(MouseButton::Middle) {
-        buttons |= Buttons::SELF_CAST;
+        actions_flags |= ActionsFlags::SELF_CAST;
     }
 
     // ---- Move ----
     if mouse.just_pressed(MouseButton::Left) {
-        buttons |= Buttons::MOVE_TO;
+        actions_flags |= ActionsFlags::MOVE_TO;
     }
 
     // --- aim ---
 
     let aim_target = get_aim(windows, camera_q);
 
-    if buttons.is_empty() && aim_target == state.aim_target {
+    if actions_flags.is_empty() && elements_flags.is_empty() && aim_target == state.aim_target {
         return;
     }
 
     let input = InputFrame {
         tick,
-        buttons,
+        actions_flags,
+        elements_flags,
         aim_target,
     };
 

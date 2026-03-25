@@ -5,7 +5,7 @@
 use crate::wire::*;
 use shared::ids::PlayerId;
 use shared::math::{Vec2f, Vec3};
-use shared::tick::{InputTick, ServerTick};
+use shared::tick::{Tick};
 
 pub enum ServerMessage {
     Welcome {
@@ -14,7 +14,7 @@ pub enum ServerMessage {
     },
 
     Snapshot {
-        server_tick: ServerTick,
+        server_tick: Tick,
         players: Vec<PlayerSnapshot>,
     },
 }
@@ -25,7 +25,8 @@ pub struct PlayerSnapshot {
     pub position: Vec2f,
     pub velocity: Vec2f,
     pub aim: Vec2f,
-    pub last_processed_input: InputTick,
+    pub elements:[u16;3],
+    pub last_processed_input: Tick,
 }
 
 impl ServerMessage {
@@ -45,7 +46,7 @@ impl ServerMessage {
                 players,
             } => {
                 write_u8(buf, 1);
-                write_u64(buf, server_tick.0);
+                write_u32(buf, server_tick.0);
                 write_u16(buf, players.len() as u16);
 
                 for p in players {
@@ -56,7 +57,10 @@ impl ServerMessage {
                     write_f32(buf, p.velocity.y);
                     write_f32(buf, p.aim.x);
                     write_f32(buf, p.aim.y);
-                    write_u64(buf, p.last_processed_input.0);
+                    for e in &p.elements {
+                        write_u16(buf, *e);
+                    }
+                    write_u32(buf, p.last_processed_input.0);
                 }
             }
         }
@@ -79,7 +83,7 @@ impl ServerMessage {
             }
 
             1 => {
-                let server_tick = ServerTick(read_u64(data, &mut c)?);
+                let server_tick = Tick(read_u32(data, &mut c)?);
                 let count = read_u16(data, &mut c)? as usize;
 
                 if count > 128 {
@@ -97,16 +101,22 @@ impl ServerMessage {
                     let vy = read_f32(data, &mut c)?;
                     let fx = read_f32(data, &mut c)?;
                     let fy = read_f32(data, &mut c)?;
-                    let last_processed_input = InputTick(read_u64(data, &mut c)?);
+                    let e1 = read_u16(data, &mut c)?;
+                    let e2 = read_u16(data, &mut c)?;
+                    let e3 = read_u16(data, &mut c)?;
+                    let last_processed_input = Tick(read_u32(data, &mut c)?);
 
                     players.push(PlayerSnapshot {
                         id,
                         position: Vec2f { x: px, y: py },
                         velocity: Vec2f { x: vx, y: vy },
                         aim: Vec2f { x: fx, y: fy },
+                        elements:[e1,e2,e3],
                         last_processed_input,
                     });
                 }
+
+                
 
                 Some(ServerMessage::Snapshot {
                     server_tick,

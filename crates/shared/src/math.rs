@@ -1,4 +1,4 @@
-use std::ops::{Add, Div, Mul, Sub};
+use std::ops::{Add, Div, Mul, Sub, AddAssign};
 
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub struct Vec2f {
@@ -139,6 +139,13 @@ macro_rules! impl_vec2_ops {
             }
         }
 
+        impl AddAssign for $t {
+            fn add_assign(&mut self, rhs: Self) {
+                self.x += rhs.x;
+                self.y += rhs.y;
+            }
+        }
+
         impl Sub for $t {
             type Output = Self;
             fn sub(self, rhs: Self) -> Self {
@@ -160,7 +167,6 @@ macro_rules! impl_vec2_ops {
         }
     };
 }
-
 impl_vec2_ops!(Vec2f, f32);
 impl_vec2_ops!(Vec2i, i32);
 

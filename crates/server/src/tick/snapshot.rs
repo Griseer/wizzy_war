@@ -4,11 +4,11 @@ use crate::state::ServerState;
 use net::server::message::{PlayerSnapshot, ServerMessage};
 use shared::ids::PlayerId;
 use shared::math::Vec3;
-use shared::tick::InputTick;
-use shared::{math::Vec2f, tick::ServerTick};
+use shared::tick::Tick;
+use shared::{math::Vec2f};
 
 pub struct ServerSnapshot {
-    pub tick: ServerTick,
+    pub tick: Tick,
     pub players: Vec<ServerPlayerSnapshot>,
 }
 
@@ -17,7 +17,8 @@ pub struct ServerPlayerSnapshot {
     pub position: Vec2f,
     pub velocity: Vec2f,
     pub aim: Vec2f,
-    pub last_processed_input: InputTick,
+    pub elements: [u16;3],
+    pub last_processed_input: Tick,
 }
 
 pub fn snapshot_to_message(snapshot: &ServerSnapshot) -> ServerMessage {
@@ -31,6 +32,7 @@ pub fn snapshot_to_message(snapshot: &ServerSnapshot) -> ServerMessage {
                 position: p.position,
                 velocity: p.velocity,
                 aim: p.aim,
+                elements: p.elements,
                 last_processed_input: p.last_processed_input,
             })
             .collect(),
@@ -38,14 +40,15 @@ pub fn snapshot_to_message(snapshot: &ServerSnapshot) -> ServerMessage {
 }
 
 pub fn build_snapshot(state: &ServerState) -> ServerSnapshot {
-    let mut players = Vec::with_capacity(state.players.len());
+    let mut players = Vec::with_capacity(state.world.players.len());
 
-    for (id, player) in &state.players {
+    for (id, player) in &state.world.players {
         players.push(ServerPlayerSnapshot {
             id: *id,
-            position: player.state.position,
-            velocity: player.state.velocity,
-            aim: player.state.aim_dir,
+            position: player.physic_body.position,
+            velocity: player.physic_body.velocity,
+            aim: player.state.aim,
+            elements: player.cast.elements_to_bits(),
             last_processed_input: player.last_processed_tick,
         });
     }

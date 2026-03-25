@@ -1,6 +1,6 @@
 // server/src/net/send.rs
 
-use crate::{simulation::snapshot::snapshot_to_message, state::ServerState};
+use crate::{tick::snapshot::snapshot_to_message, state::ServerState};
 use ::net::server::message::ServerMessage;
 use shared::ids::PlayerId;
 use std::net::{SocketAddr, UdpSocket};

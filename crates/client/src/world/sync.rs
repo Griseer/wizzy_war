@@ -19,6 +19,8 @@ pub fn sync_players_from_snapshot_system(
             transform.translation.x = snapshot.position.x;
             transform.translation.y = 0.0;
             transform.translation.z = snapshot.position.y;
+
+            transform.look_at(vec3( snapshot.aim.x, 0.0, snapshot.aim.y), Vec3::Y);
         }
     }
 }
